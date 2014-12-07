@@ -41,7 +41,7 @@ impl<T: 'static> Getter<T> for Rc<RefCell<||:'static -> T>> {
         (*(self.borrow_mut().deref_mut()))()
     }
 
-    fn boxed_clone<'r>(&self) -> Box<Getter<T> + 'r> {
+    fn boxed_clone(&self) -> Box<Getter<T> + 'static> {
         box self.clone()
     }
 }

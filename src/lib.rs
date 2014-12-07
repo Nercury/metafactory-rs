@@ -14,18 +14,29 @@
 //!     let meta_arg1 = new_metafactory(5i);
 //!
 //!     // build argument-factory from lambda.
-//!     let meta_arg2 = new_metafactory(|| 5i32);
+//!     let meta_arg2 = new_metafactory(|| 14i32);
+//!
+//!     // build a factory that uses other factories create added numbers.
+//!     let meta_adder = new_metafactory(|a1: int, a2: i32| a1 + a2 as int);
 //!
 //!     // it knows the cloneable source returns int
 //!     assert!(meta_arg1.get_type().is::<int>());
 //!     // it knows the lambda source returns i32
 //!     assert!(meta_arg2.get_type().is::<i32>());
+//!     // it knows the lambda with 2 args returns int
+//!     assert!(meta_adder.get_type().is::<int>());
 //!
-//!     // create a factory that can be used as argument for other factory
-//!     let boxany = meta_arg1.new_factory(Vec::new());
+//!     // create a factory for adder, pass other 2 factories as arguments
+//!     let boxany = meta_adder.new_factory(vec![
+//!         meta_arg1.new_factory(Vec::new()),
+//!         meta_arg2.new_factory(Vec::new()),
+//!     ]);
 //!
 //!     // conveniently downcast factory to callable instance
 //!     let factory = boxany.to_factory::<int>().unwrap();
+//!
+//!     // value should be the sum.
+//!     assert_eq!(19, factory.get());
 //!
 //!     // factory can be cloned
 //!     let factory2 = factory.clone();

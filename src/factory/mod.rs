@@ -11,7 +11,7 @@ pub trait Getter<T> {
     ///
     /// This is kind of experimental solution - it allocates a new box
     /// to avoid breaking `Sized` requirement for `Factory::Clone`.
-    fn boxed_clone<'a>(&self) -> Box<Getter<T> + 'a>;
+    fn boxed_clone(&self) -> Box<Getter<T> + 'static>;
 }
 
 /// A factory proxy.
@@ -20,16 +20,16 @@ pub trait Getter<T> {
 /// unknown source. `Factory` will always produce a new owned value -
 /// any other pattern can be implemented on top of that.
 #[stable]
-pub struct Factory<'a, T> {
-    getter: Box<Getter<T> + 'a>,
+pub struct Factory<T:'static> {
+    getter: Box<Getter<T> + 'static>,
 }
 
 #[stable]
-impl<'a, T: 'static> Factory<'a, T> {
+impl<'a, T: 'static> Factory<T> {
     /// Create a new `Factory`.
     ///
     /// Create a new factory from any type that implements `Getter` trait.
-    pub fn new(getter: Box<Getter<T> + 'a>) -> Factory<'a, T> {
+    pub fn new(getter: Box<Getter<T> + 'static>) -> Factory<T> {
         Factory::<T> {
             getter: getter,
         }
@@ -41,8 +41,8 @@ impl<'a, T: 'static> Factory<'a, T> {
     }
 }
 
-impl<'a, T: 'static> Clone for Factory<'a, T> {
-    fn clone(&self) -> Factory<'a, T> {
+impl<'a, T: 'static> Clone for Factory<T> {
+    fn clone(&self) -> Factory<T> {
         Factory::<T> {
             getter: self.getter.boxed_clone(),
         }
@@ -51,11 +51,11 @@ impl<'a, T: 'static> Clone for Factory<'a, T> {
 
 /// Convert value to `Factory`.
 pub trait ToFactory {
-    fn to_factory<'a, T>(self) -> Option<Factory<'a, T>>;
+    fn to_factory<T>(self) -> Option<Factory<T>>;
 }
 
 impl ToFactory for Box<Any> {
-    fn to_factory<'a, T: 'static>(self) -> Option<Factory<'a, T>> {
+    fn to_factory<'a, T: 'static>(self) -> Option<Factory<T>> {
         match self.downcast::<Factory<T>>().ok() {
             Some(val) => Some(*val),
             None => None
