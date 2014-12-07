@@ -44,4 +44,8 @@ impl<T: 'static + Clone> Getter<T> for CloneableValue<T> {
     fn get(&self) -> T {
         self.value.clone()
     }
+
+    fn boxed_clone<'a>(&self) -> Box<Getter<T> + 'a> {
+        box CloneableValue::<T> { value: self.value.clone() }
+    }
 }

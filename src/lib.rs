@@ -21,7 +21,12 @@
 //!
 //!     // conveniently donwcast factory to callable instance
 //!     let factory = Factory::<int>::from_any(boxany);
-//!     assert_eq!(factory.get(), 5i);
+//!
+//!     // factory can be cloned
+//!     let factory2 = factory.clone();
+//!
+//!     // both clones invoke the same construction path and return the same value
+//!     assert_eq!(factory.get(), factory2.get());
 //! }
 //! ```
 

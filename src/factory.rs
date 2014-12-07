@@ -5,6 +5,7 @@ use std::boxed::{ BoxAny };
 #[experimental]
 pub trait Getter<T> {
     fn get(&self) -> T;
+    fn boxed_clone<'a>(&self) -> Box<Getter<T> + 'a>;
 }
 
 /// A factory proxy.
@@ -38,5 +39,13 @@ impl<'a, T: 'static> Factory<'a, T> {
     /// Get a new owned value.
     pub fn get(&self) -> T {
         self.getter.get()
+    }
+}
+
+impl<'a, T: 'static> Clone for Factory<'a, T> {
+    fn clone(&self) -> Factory<'a, T> {
+        Factory::<T> {
+            getter: self.getter.boxed_clone(),
+        }
     }
 }
