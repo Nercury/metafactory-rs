@@ -7,7 +7,7 @@
 //!
 //! ```
 //! use metafactory::new_metafactory;
-//! use metafactory::factory::Factory;
+//! use metafactory::factory::ToFactory;
 //!
 //! fn main() {
 //!     // build meta-info for constructor from cloneable source.
@@ -20,7 +20,7 @@
 //!     let boxany = mf.new_factory(Vec::new());
 //!
 //!     // conveniently donwcast factory to callable instance
-//!     let factory = Factory::<int>::from_any(boxany);
+//!     let factory = boxany.to_factory::<int>().unwrap();
 //!
 //!     // factory can be cloned
 //!     let factory2 = factory.clone();
@@ -36,6 +36,7 @@ use std::any::{ Any };
 use typedef::{ TypeDef };
 
 pub mod factory;
+pub mod error;
 pub mod from_clone;
 
 /// Implements reflection and initiation of any abstract object constructor.
@@ -71,8 +72,7 @@ pub mod from_clone;
 ///
 /// ```
 /// use metafactory::{ new_metafactory };
-/// use metafactory::factory::{ Factory };
-/// use std::boxed::BoxAny; // for downcast
+/// use metafactory::factory::{ ToFactory };
 ///
 /// let metafactory = new_metafactory(5i);
 /// assert!(metafactory.get_type().is::<int>());
@@ -82,7 +82,7 @@ pub mod from_clone;
 ///     .new_factory(
 ///         Vec::new() // No arguments in this case.
 ///     )
-///     .downcast::<Factory<int>>()
+///     .to_factory::<int>()
 ///     .unwrap();
 ///
 /// assert_eq!(factory.get(), 5i);
