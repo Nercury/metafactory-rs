@@ -4,7 +4,13 @@ use std::boxed::{ BoxAny };
 /// Gettable value trait.
 #[experimental]
 pub trait Getter<T> {
+    /// Produce a new value.
     fn get(&self) -> T;
+
+    /// Create a clone for this getter.
+    ///
+    /// This is kind of experimental solution - it allocates a new box
+    /// to avoid breaking `Sized` requirement for `Factory::Clone`.
     fn boxed_clone<'a>(&self) -> Box<Getter<T> + 'a>;
 }
 
@@ -43,6 +49,7 @@ impl<'a, T: 'static> Clone for Factory<'a, T> {
     }
 }
 
+/// Convert value to `Factory`.
 pub trait ToFactory {
     fn to_factory<'a, T>(self) -> Option<Factory<'a, T>>;
 }
