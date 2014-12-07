@@ -38,6 +38,7 @@ use typedef::{ TypeDef };
 pub mod factory;
 pub mod error;
 pub mod from_clone;
+pub mod from_closure;
 
 /// Implements reflection and initiation of any abstract object constructor.
 ///

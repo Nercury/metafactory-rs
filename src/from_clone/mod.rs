@@ -91,7 +91,7 @@ mod test {
     }
 
     #[test]
-    fn facotry_clone_should_return_same_value() {
+    fn factory_clone_should_return_same_value() {
         use super::super::factory::{ ToFactory };
         let factory = create(24i).new_factory(Vec::new()).to_factory::<int>().unwrap();
         assert_eq!(
