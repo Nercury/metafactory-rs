@@ -1,9 +1,37 @@
+//! `MetaFactory` is used to build efficient object creation trees at
+//! runtime. This is potentialy useful if the configuration of this
+//! tree occurs in different libraries.
+//!
+//! In other words, it allows us to separate __what__ is created from
+//! __how__ it is created.
+//!
+//! ```
+//! use metafactory::new_metafactory;
+//! use metafactory::factory::Factory;
+//!
+//! fn main() {
+//!     // build meta-info for constructor from cloneable source.
+//!     let mf = new_metafactory(5i);
+//!
+//!     // inspect the metafactory
+//!     assert!(mf.get_type().is::<int>());
+//!
+//!     // create a factory that can be used as argument for other factory
+//!     let boxany = mf.new_factory(Vec::new());
+//!
+//!     // conveniently donwcast factory to callable instance
+//!     let factory = Factory::<int>::from_any(boxany);
+//!     assert_eq!(factory.get(), 5i);
+//! }
+//! ```
+
 extern crate typedef;
 
 use std::any::{ Any };
 use typedef::{ TypeDef };
 
-pub mod clone;
+pub mod factory;
+pub mod from_clone;
 
 /// Implements reflection and initiation of any abstract object constructor.
 ///
@@ -23,7 +51,7 @@ pub mod clone;
 ///
 /// There are separate traits for `MetaFactory` and "real" `Factory`.
 /// `MetaFactory` is used to build a real `Factory` by passing all the
-/// required constructor arguments as factories under Vec<Box<Any>>.
+/// required constructor arguments as factories under `Vec<Box<Any>>`.
 ///
 /// Internaly, all parent `Factory`s will be downcasted to correct types
 /// and stored inside returned `Factory`'s scope, so that all of them
@@ -37,7 +65,8 @@ pub mod clone;
 /// correct, and then create an actual getter for the value:
 ///
 /// ```
-/// use metafactory::{ new_metafactory, Factory };
+/// use metafactory::{ new_metafactory };
+/// use metafactory::factory::{ Factory };
 /// use std::boxed::BoxAny; // for downcast
 ///
 /// let metafactory = new_metafactory(5i);
@@ -82,37 +111,4 @@ pub trait ToMetaFactory {
 /// Supported sources are in submodules, look at "clone" for simpliest example.
 pub fn new_metafactory<'r, T: ToMetaFactory>(any: T) -> Box<MetaFactory + 'r> {
     any.to_metafactory()
-}
-
-/// Gettable value trait.
-#[experimental]
-pub trait Getter<T> {
-    fn get(&self) -> T;
-}
-
-/// A factory proxy.
-///
-/// `Factory` proxy is used to return a concrete value from
-/// unknown source. `Factory` will always produce a new owned value -
-/// any other pattern can be implemented on top of that.
-#[stable]
-pub struct Factory<'a, T> {
-    getter: Box<Getter<T> + 'a>,
-}
-
-#[stable]
-impl<'a, T> Factory<'a, T> {
-    /// Create a new `Factory`.
-    ///
-    /// Create a new factory from any type that implements `Getter` trait.
-    pub fn new(getter: Box<Getter<T> + 'a>) -> Factory<'a, T> {
-        Factory::<T> {
-            getter: getter,
-        }
-    }
-
-    /// Get a new owned value.
-    pub fn get(&self) -> T {
-        self.getter.get()
-    }
 }

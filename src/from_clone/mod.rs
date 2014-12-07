@@ -1,7 +1,8 @@
 use typedef::{ TypeDef };
 use std::any::{ Any };
 
-use super::{ MetaFactory, ToMetaFactory, Factory, Getter };
+use super::{ MetaFactory, ToMetaFactory };
+use super::factory::{ Factory, Getter };
 
 #[deriving(Clone)]
 #[experimental]
