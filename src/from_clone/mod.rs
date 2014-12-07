@@ -3,6 +3,7 @@ use std::any::{ Any };
 
 use super::{ MetaFactory, ToMetaFactory };
 use super::factory::{ Factory, Getter };
+use super::error::{ FactoryErrorKind };
 
 #[experimental]
 pub struct CloneableMetaFactory<T> {
@@ -31,10 +32,12 @@ impl<T: 'static + Clone> MetaFactory for CloneableMetaFactory<T> {
         Vec::new()
     }
 
-    fn new_factory(&self, _arg_getters: Vec<Box<Any>>) -> Box<Any> {
-        box Factory::new(
-            box CloneableValue::<T> { value: self.value.clone() }
-        ) as Box<Any>
+    fn new(&self, _arg_getters: Vec<Box<Any>>) -> Result<Box<Any>, FactoryErrorKind> {
+        Ok(
+            box Factory::new(
+                box CloneableValue::<T> { value: self.value.clone() }
+            ) as Box<Any>
+        )
     }
 }
 
@@ -51,7 +54,7 @@ impl<T: 'static + Clone> Getter<T> for CloneableValue<T> {
 #[cfg(test)]
 mod test {
     use typedef::TypeDef;
-    use super::super::{ ToMetaFactory, MetaFactory };
+    use super::super::{ ToMetaFactory, MetaFactory, AsFactoryExt };
 
     #[test]
     fn should_return_correct_type() {
@@ -83,17 +86,15 @@ mod test {
 
     #[test]
     fn should_build_usable_factory() {
-        use super::super::factory::{ ToFactory };
         assert_eq!(
-            create(24i).new_factory(Vec::new()).to_factory::<int>().unwrap().get(),
+            create(24i).new(Vec::new()).ok().unwrap().as_factory_of::<int>().unwrap().get(),
             24i
         );
     }
 
     #[test]
     fn factory_clone_should_return_same_value() {
-        use super::super::factory::{ ToFactory };
-        let factory = create(24i).new_factory(Vec::new()).to_factory::<int>().unwrap();
+        let factory = create(24i).new(Vec::new()).ok().unwrap().as_factory_of::<int>().unwrap();
         assert_eq!(
             factory.get(),
             factory.clone().get()

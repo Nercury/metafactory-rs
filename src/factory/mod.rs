@@ -49,13 +49,13 @@ impl<'a, T: 'static> Clone for Factory<T> {
     }
 }
 
-/// Convert value to `Factory`.
-pub trait ToFactory {
-    fn to_factory<T>(self) -> Option<Factory<T>>;
+/// Downcast value to `Factory`.
+pub trait AsFactoryExt {
+    fn as_factory_of<T>(self) -> Option<Factory<T>>;
 }
 
-impl ToFactory for Box<Any> {
-    fn to_factory<'a, T: 'static>(self) -> Option<Factory<T>> {
+impl AsFactoryExt for Box<Any> {
+    fn as_factory_of<'a, T: 'static>(self) -> Option<Factory<T>> {
         match self.downcast::<Factory<T>>().ok() {
             Some(val) => Some(*val),
             None => None
@@ -65,7 +65,8 @@ impl ToFactory for Box<Any> {
 
 #[cfg(test)]
 mod test {
-    use super::{ Getter, Factory, ToFactory };
+    use super::{ Getter, Factory };
+    use super::AsFactoryExt;
     use std::any::Any;
 
     #[test]
@@ -85,7 +86,7 @@ mod test {
     #[test]
     fn should_be_able_to_downcast_from_any() {
         let boxany = box create_with_val("HAI") as Box<Any>;
-        let downcasted = boxany.to_factory::<String>().unwrap();
+        let downcasted = boxany.as_factory_of::<String>().unwrap();
 
         assert_eq!(downcasted.get(), "HAI");
     }

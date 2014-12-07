@@ -1,167 +1,270 @@
+//! This implements metafactory construction from closure.
+//!
+//! Using some big nasty macro, it supports up to 12 arguments.
+//!
+//! For detailed info about error handling, look at `error` mod. The
+//! example bellow simply unwraps everything.
+//!
+//! ```
+//! use metafactory::new_metafactory;
+//! use metafactory::AsFactoryExt;
+//!
+//! fn main() {
+//!     // build a metafactory from multi-argument closure.
+//!     let meta_factory = new_metafactory(
+//!         |a: int, b: bool, c: &str| {
+//!             format!("invoked with {}, {}, {}", a, b, c)
+//!         }
+//!     );
+//!
+//!     // create a factory instance this closure.
+//!     // argument factories can be constructed from cloneable sources.
+//!     let factory = meta_factory.new(vec![
+//!         new_metafactory(3i).new(Vec::new()).ok().unwrap(),
+//!         new_metafactory(false).new(Vec::new()).ok().unwrap(),
+//!         new_metafactory("hello").new(Vec::new()).ok().unwrap(),
+//!     ]).ok().unwrap().as_factory_of::<String>().unwrap();
+//!
+//!     // value should match what factory produced.
+//!     assert_eq!("invoked with 3, false, hello", factory.get());
+//! }
+//! ```
+
 use std::any::Any;
 use std::rc::Rc;
 use std::cell::RefCell;
 
 use typedef::TypeDef;
 
-use super::super::{ MetaFactory, ToMetaFactory };
-use super::super::factory::{ Factory, ToFactory, Getter };
+use super::super::{ MetaFactory, ToMetaFactory, AsFactoryExt };
+use super::super::factory::{ Factory, Getter };
+use super::super::error::{ FactoryErrorKind, ArgCountMismatch };
 
-#[experimental]
-pub struct GetterScope1<A1:'static, T:'static> {
-    a1: Factory<A1>,
-    closure: Rc<RefCell<|A1|:'static -> T>>,
-}
-
-#[experimental]
-pub struct GetterScope2<A1:'static, A2:'static, T:'static> {
-    a1: Factory<A1>,
-    a2: Factory<A2>,
-    closure: Rc<RefCell<|A1, A2|:'static -> T>>,
-}
-
-/// Creates `MetaFactory` from closure function.
-#[stable]
-impl<A1:'static, T:'static> ToMetaFactory for (|A1|:'static -> T) {
-    fn to_metafactory<'a>(self) -> Box<MetaFactory + 'a> {
-        box Rc::new(RefCell::new(self))
-    }
-}
-
-/// Creates `MetaFactory` from closure function.
-#[stable]
-impl<A1:'static, A2:'static, T:'static> ToMetaFactory for (|A1, A2|:'static -> T) {
-    fn to_metafactory<'a>(self) -> Box<MetaFactory + 'a> {
-        box Rc::new(RefCell::new(self))
-    }
-}
-
-impl<A1:'static, T:'static> MetaFactory for Rc<RefCell<|A1|:'static -> T>> {
-    fn get_type(&self) -> TypeDef {
-        TypeDef::of::<T>()
-    }
-
-    fn get_arg_types(&self) -> Vec<TypeDef> {
-        vec![TypeDef::of::<A1>()]
-    }
-
-    fn new_factory(&self, arg_getters: Vec<Box<Any>>) -> Box<Any> {
-        let mut getters = arg_getters;
-        box Factory::<T>::new(
-            box GetterScope1::<A1, T> {
-                a1: getters.pop().expect("arg 1 missing").to_factory::<A1>().expect("bad arg 1"),
-                closure: self.clone(),
+#[macro_escape]
+mod macros {
+    macro_rules! assert_arg_count(
+        ($expected:expr, $specified:expr)
+        =>
+        (
+            if $expected != $specified {
+                return Err(
+                    FactoryErrorKind::ArgCountMismatch(
+                        ArgCountMismatch::new($expected, $specified)
+                    )
+                )
             }
-        ) as Box<Any>
-    }
-}
+        )
+    )
 
-impl<A1:'static, A2:'static, T:'static> MetaFactory for Rc<RefCell<|A1, A2|:'static -> T>> {
-    fn get_type(&self) -> TypeDef {
-        TypeDef::of::<T>()
-    }
-
-    fn get_arg_types(&self) -> Vec<TypeDef> {
-        vec![TypeDef::of::<A1>(), TypeDef::of::<A2>()]
+    macro_rules! count_exprs {
+        () => (0);
+        ($head:expr $(, $tail:expr)*) => (1 + count_exprs!($($tail),*));
     }
 
-    fn new_factory(&self, arg_getters: Vec<Box<Any>>) -> Box<Any> {
-        let mut getters = arg_getters;
-        box Factory::<T>::new(
-            box GetterScope2::<A1, A2, T> {
-                a2: getters.pop().expect("arg 2 missing").to_factory::<A2>().expect("bad arg 2"),
-                a1: getters.pop().expect("arg 1 missing").to_factory::<A1>().expect("bad arg 1"),
-                closure: self.clone(),
+    macro_rules! many_arg_closure_impl(
+        ($scopeid:ident: $($argid:ident,$argt:ty,$fieldn:ident)|+)
+        =>
+        (
+            struct $scopeid<$($argid:'static), +, T:'static> {
+                $(
+                    $fieldn: Factory<$argt>,
+                )+
+                closure: Rc<RefCell<|$($argt), +|:'static -> T>>,
             }
-            ) as Box<Any>
-        }
-    }
 
-impl<'a, A1:'static, T: 'static> Getter<T> for GetterScope1<A1, T> {
-    fn get(&self) -> T {
-        (*(self.closure.borrow_mut().deref_mut()))(
-            self.a1.get()
+            impl<$($argid:'static), +, T:'static> ToMetaFactory for (|$($argt), +|:'static -> T) {
+                fn to_metafactory<'a>(self) -> Box<MetaFactory + 'a> {
+                    box Rc::new(RefCell::new(self))
+                }
+            }
+
+            impl<$($argid:'static), +, T:'static> MetaFactory for Rc<RefCell<|$($argt), +|:'static -> T>> {
+                fn get_type(&self) -> TypeDef {
+                    TypeDef::of::<T>()
+                }
+
+                fn get_arg_types(&self) -> Vec<TypeDef> {
+                    vec![$(TypeDef::of::<$argt>()), +]
+                }
+
+                fn new(&self, arg_getters: Vec<Box<Any>>) -> Result<Box<Any>, FactoryErrorKind> {
+                    let required_argc = count_exprs!($($argid),+);
+
+                    assert_arg_count!(required_argc, arg_getters.len());
+
+                    let mut getters: Vec<Box<Any>> = Vec::with_capacity(arg_getters.len());
+                    let mut index_names = Vec::<uint>::new();
+                    let mut index = 1;
+                    for v in arg_getters.into_iter().rev() {
+                        getters.push(v);
+                        index_names.push(index);
+                        index += 1;
+                    }
+
+                    let factory = box Factory::<T>::new(
+                        box $scopeid::<$($argt), +, T> {
+                            $(
+                                $fieldn: getters.pop()
+                                    .unwrap()
+                                    .as_factory_of::<$argt>()
+                                    .unwrap(),
+                            )+
+                            closure: self.clone(),
+                        }
+                    ) as Box<Any>;
+
+                    Ok(factory)
+                }
+            }
+
+            impl<'a, $($argid:'static), +, T: 'static> Getter<T> for $scopeid<$($argt), +, T> {
+                fn get(&self) -> T {
+                    (*(self.closure.borrow_mut().deref_mut()))(
+                        $(
+                            self.$fieldn.get()
+                        ),+
+                    )
+                }
+
+                fn boxed_clone(&self) -> Box<Getter<T> + 'static> {
+                    $(
+                        let $fieldn = &self.$fieldn;
+                    )+
+                    box $scopeid::<$($argt), +, T> {
+                        $(
+                            $fieldn: $fieldn.clone()
+                        ),
+                        +,
+                        closure: self.closure.clone(),
+                    }
+                }
+            }
         )
-    }
-
-    fn boxed_clone(&self) -> Box<Getter<T> + 'static> {
-        box GetterScope1::<A1, T> {
-            a1: self.a1.clone(),
-            closure: self.closure.clone(),
-        }
-    }
+    )
 }
 
-impl<'a, A1:'static, A2:'static, T: 'static> Getter<T> for GetterScope2<A1, A2, T> {
-    fn get(&self) -> T {
-        (*(self.closure.borrow_mut().deref_mut()))(
-            self.a1.get(),
-            self.a2.get()
-        )
-    }
+many_arg_closure_impl!(
+    GetterScope:
+    A, A, a
+)
 
-    fn boxed_clone(&self) -> Box<Getter<T> + 'static> {
-        box GetterScope2::<A1, A2, T> {
-            a1: self.a1.clone(),
-            a2: self.a2.clone(),
-            closure: self.closure.clone(),
-        }
-    }
-}
+many_arg_closure_impl!(
+    GetterScope2:
+    A1, A1, a1 |
+    A2, A2, a2
+)
 
-#[cfg(test)]
-mod test {
-    use typedef::TypeDef;
-    use super::super::super::{ ToMetaFactory, MetaFactory }; // super
+many_arg_closure_impl!(
+    GetterScope3:
+    A1, A1, a1 |
+    A2, A2, a2 |
+    A3, A3, a3
+)
 
-    #[test]
-    fn should_return_correct_type() {
-        assert_eq!(
-            create(|| 24i).get_type(),
-            TypeDef::of::<int>()
-        );
-        assert_eq!(
-            create(|| 1f32).get_type(),
-            TypeDef::of::<f32>()
-        );
-        assert_eq!(
-            create(|| "aaa".to_string()).get_type(),
-            TypeDef::of::<String>()
-        );
-        assert_eq!(
-            create(|| box "aaa".to_string()).get_type(),
-            TypeDef::of::<Box<String>>()
-        );
-    }
+many_arg_closure_impl!(
+    GetterScope4:
+    A1, A1, a1 |
+    A2, A2, a2 |
+    A3, A3, a3 |
+    A4, A4, a4
+)
 
-    #[test]
-    fn should_require_no_arguments() {
-        assert_eq!(
-            create(|| 24i).get_arg_types().len(),
-            0
-        );
-    }
+many_arg_closure_impl!(
+    GetterScope5:
+    A1, A1, a1 |
+    A2, A2, a2 |
+    A3, A3, a3 |
+    A4, A4, a4 |
+    A5, A5, a5
+)
 
-    #[test]
-    fn should_build_usable_factory() {
-        use super::super::super::factory::{ ToFactory };
-        assert_eq!(
-            create(|| 24i).new_factory(Vec::new()).to_factory::<int>().unwrap().get(),
-            24i
-        );
-    }
+many_arg_closure_impl!(
+    GetterScope6:
+    A1, A1, a1 |
+    A2, A2, a2 |
+    A3, A3, a3 |
+    A4, A4, a4 |
+    A5, A5, a5 |
+    A6, A6, a6
+)
 
-    #[test]
-    fn factory_clone_should_return_same_value() {
-        use super::super::super::factory::{ ToFactory };
-        let factory = create(|| 24i).new_factory(Vec::new()).to_factory::<int>().unwrap();
-        assert_eq!(
-            factory.get(),
-            factory.clone().get()
-        );
-    }
+many_arg_closure_impl!(
+    GetterScope7:
+    A1, A1, a1 |
+    A2, A2, a2 |
+    A3, A3, a3 |
+    A4, A4, a4 |
+    A5, A5, a5 |
+    A6, A6, a6 |
+    A7, A7, a7
+)
 
-    fn create<'r, T: ToMetaFactory>(source: T) -> Box<MetaFactory + 'r> {
-        source.to_metafactory()
-    }
-}
+many_arg_closure_impl!(
+    GetterScope8:
+    A1, A1, a1 |
+    A2, A2, a2 |
+    A3, A3, a3 |
+    A4, A4, a4 |
+    A5, A5, a5 |
+    A6, A6, a6 |
+    A7, A7, a7 |
+    A8, A8, a8
+)
+
+many_arg_closure_impl!(
+    GetterScope9:
+    A1, A1, a1 |
+    A2, A2, a2 |
+    A3, A3, a3 |
+    A4, A4, a4 |
+    A5, A5, a5 |
+    A6, A6, a6 |
+    A7, A7, a7 |
+    A8, A8, a8 |
+    A9, A9, a9
+)
+
+many_arg_closure_impl!(
+    GetterScope10:
+    A1, A1, a1 |
+    A2, A2, a2 |
+    A3, A3, a3 |
+    A4, A4, a4 |
+    A5, A5, a5 |
+    A6, A6, a6 |
+    A7, A7, a7 |
+    A8, A8, a8 |
+    A9, A9, a9 |
+    A10, A10, a10
+)
+
+many_arg_closure_impl!(
+    GetterScope11:
+    A1, A1, a1 |
+    A2, A2, a2 |
+    A3, A3, a3 |
+    A4, A4, a4 |
+    A5, A5, a5 |
+    A6, A6, a6 |
+    A7, A7, a7 |
+    A8, A8, a8 |
+    A9, A9, a9 |
+    A10, A10, a10 |
+    A11, A11, a11
+)
+
+many_arg_closure_impl!(
+    GetterScope12:
+    A1, A1, a1 |
+    A2, A2, a2 |
+    A3, A3, a3 |
+    A4, A4, a4 |
+    A5, A5, a5 |
+    A6, A6, a6 |
+    A7, A7, a7 |
+    A8, A8, a8 |
+    A9, A9, a9 |
+    A10, A10, a10 |
+    A11, A11, a11 |
+    A12, A12, a12
+)

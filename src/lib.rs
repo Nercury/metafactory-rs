@@ -7,7 +7,7 @@
 //!
 //! ```
 //! use metafactory::new_metafactory;
-//! use metafactory::factory::ToFactory;
+//! use metafactory::AsFactoryExt;
 //!
 //! fn main() {
 //!     // build argument-factory from cloneable source.
@@ -27,13 +27,13 @@
 //!     assert!(meta_adder.get_type().is::<int>());
 //!
 //!     // create a factory for adder, pass other 2 factories as arguments
-//!     let boxany = meta_adder.new_factory(vec![
-//!         meta_arg1.new_factory(Vec::new()),
-//!         meta_arg2.new_factory(Vec::new()),
-//!     ]);
+//!     let boxany = meta_adder.new(vec![
+//!         meta_arg1.new(Vec::new()).ok().unwrap(),
+//!         meta_arg2.new(Vec::new()).ok().unwrap(),
+//!     ]).ok().unwrap();
 //!
 //!     // conveniently downcast factory to callable instance
-//!     let factory = boxany.to_factory::<int>().unwrap();
+//!     let factory = boxany.as_factory_of::<int>().unwrap();
 //!
 //!     // value should be the sum.
 //!     assert_eq!(19, factory.get());
@@ -46,10 +46,15 @@
 //! }
 //! ```
 
+#![feature(macro_rules)]
+
 extern crate typedef;
 
 use std::any::{ Any };
 use typedef::{ TypeDef };
+use error::{ FactoryErrorKind };
+
+pub use factory::AsFactoryExt;
 
 pub mod factory;
 pub mod error;
@@ -64,7 +69,7 @@ pub mod from_closure;
 /// mechanism at the runtime.
 ///
 /// `MetaFactory` contains information about the constructor source: the
-/// return type and argument types. It also contains a method `new_factory`
+/// return type and argument types. It also contains a method `new`
 /// that can create a function to invoke this source and get the values.
 ///
 /// ## Factory initiation
@@ -88,18 +93,19 @@ pub mod from_closure;
 /// correct, and then create an actual getter for the value:
 ///
 /// ```
-/// use metafactory::{ new_metafactory };
-/// use metafactory::factory::{ ToFactory };
+/// use metafactory::new_metafactory;
+/// use metafactory::AsFactoryExt;
 ///
 /// let metafactory = new_metafactory(5i);
 /// assert!(metafactory.get_type().is::<int>());
 /// assert!(metafactory.get_arg_types().len() == 0); // clonable int has no arguments
 ///
 /// let factory = metafactory
-///     .new_factory(
+///     .new(
 ///         Vec::new() // No arguments in this case.
 ///     )
-///     .to_factory::<int>()
+///     .ok().unwrap()
+///     .as_factory_of::<int>()
 ///     .unwrap();
 ///
 /// assert_eq!(factory.get(), 5i);
@@ -111,7 +117,7 @@ pub trait MetaFactory {
     #[unstable]
     fn get_arg_types(&self) -> Vec<TypeDef>;
     #[unstable]
-    fn new_factory(&self, arg_getters: Vec<Box<Any>>) -> Box<Any>;
+    fn new(&self, arg_getters: Vec<Box<Any>>) -> Result<Box<Any>, FactoryErrorKind>;
 }
 
 /// Trait for values convertable to `MetaFactory`.
