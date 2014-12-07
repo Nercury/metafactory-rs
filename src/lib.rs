@@ -10,16 +10,21 @@
 //! use metafactory::factory::ToFactory;
 //!
 //! fn main() {
-//!     // build meta-info for constructor from cloneable source.
-//!     let mf = new_metafactory(5i);
+//!     // build argument-factory from cloneable source.
+//!     let meta_arg1 = new_metafactory(5i);
 //!
-//!     // inspect the metafactory
-//!     assert!(mf.get_type().is::<int>());
+//!     // build argument-factory from lambda.
+//!     let meta_arg2 = new_metafactory(|| 5i32);
+//!
+//!     // it knows the cloneable source returns int
+//!     assert!(meta_arg1.get_type().is::<int>());
+//!     // it knows the lambda source returns i32
+//!     assert!(meta_arg2.get_type().is::<i32>());
 //!
 //!     // create a factory that can be used as argument for other factory
-//!     let boxany = mf.new_factory(Vec::new());
+//!     let boxany = meta_arg1.new_factory(Vec::new());
 //!
-//!     // conveniently donwcast factory to callable instance
+//!     // conveniently downcast factory to callable instance
 //!     let factory = boxany.to_factory::<int>().unwrap();
 //!
 //!     // factory can be cloned
