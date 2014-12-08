@@ -1,3 +1,5 @@
+//! Implements a wrapper struct container for internal getter.
+
 use std::any::{ Any };
 use std::boxed::{ BoxAny };
 

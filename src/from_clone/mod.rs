@@ -1,3 +1,23 @@
+//! This implements metafactory construction from cloneable value.
+//!
+//! ```
+//! use metafactory::metafactory;
+//! use metafactory::AsFactoryExt;
+//!
+//! fn main() {
+//!     // build a metafactory from cloneable value.
+//!     let meta_factory = metafactory("hello");
+//!
+//!     // create a factory instance this closure.
+//!     let factory = meta_factory
+//!         .new(Vec::new()).ok().unwrap()
+//!         .as_factory_of::<&str>().unwrap();
+//!
+//!     // value should match what factory produced.
+//!     assert_eq!("hello", factory.get());
+//! }
+//! ```
+
 use typedef::{ TypeDef };
 use std::any::{ Any };
 

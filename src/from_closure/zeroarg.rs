@@ -1,3 +1,26 @@
+//! This implements metafactory construction from zero-argument closure.
+//!
+//! Uses the same mechanism as manyarg closure, but is much easier to read,
+//! because there are no nasty macros here.
+//!
+//! ```
+//! use metafactory::metafactory;
+//! use metafactory::AsFactoryExt;
+//!
+//! fn main() {
+//!     // build a metafactory from zero-argument closure.
+//!     let meta_factory = metafactory(|| true);
+//!
+//!     // create a factory instance this closure.
+//!     let factory = meta_factory
+//!         .new(Vec::new()).ok().unwrap()
+//!         .as_factory_of::<bool>().unwrap();
+//!
+//!     // value should match what factory produced.
+//!     assert_eq!(true, factory.get());
+//! }
+//! ```
+
 use std::any::Any;
 use std::rc::Rc;
 use std::cell::RefCell;
@@ -21,6 +44,7 @@ impl<T:'static> ToMetaFactory for (||:'static -> T) {
     }
 }
 
+/// Use closure itself as `MetaFactory`.
 impl<T:'static> MetaFactory for Rc<RefCell<||:'static -> T>> {
     fn get_type(&self) -> TypeDef {
         TypeDef::of::<T>()
@@ -39,6 +63,7 @@ impl<T:'static> MetaFactory for Rc<RefCell<||:'static -> T>> {
     }
 }
 
+/// And also use closure itself as created `Factory`.
 impl<T: 'static> Getter<T> for Rc<RefCell<||:'static -> T>> {
     fn get(&self) -> T {
         (*(self.borrow_mut().deref_mut()))()
