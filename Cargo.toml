@@ -10,7 +10,7 @@ repository = "https://github.com/Nercury/metafactory-rs"
 readme = "README.md"
 
 keywords = [
-    "runtime", "factory", "reflection", "any", "invoke", "constructor", "dynamic"
+    "runtime", "factory", "reflection", "invoke", "constructor"
 ]
 
 license = "MIT"
