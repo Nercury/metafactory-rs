@@ -1,4 +1,4 @@
-# TypeDef
+# MetaFactory
 
 Build value factory chains at runtime from lambdas and other sources.
 
