@@ -15,7 +15,7 @@ keywords = [
 
 license = "MIT"
 
-description = "Implements runtime reflection for object constructor."
+description = "Rust library to chain together object factories."
 
 [dependencies]
 typedef = "*"

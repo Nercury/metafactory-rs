@@ -1,6 +1,6 @@
 # TypeDef
 
-Build value creation chains at runtime from lambdas and other sources.
+Build value factory chains at runtime from lambdas and other sources.
 
 [![Build Status](https://travis-ci.org/Nercury/metafactory-rs.svg?branch=master)](https://travis-ci.org/Nercury/metafactory-rs)
 
