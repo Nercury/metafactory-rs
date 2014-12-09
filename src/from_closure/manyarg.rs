@@ -1,9 +1,6 @@
-//! This implements metafactory construction from closure.
+//! This implements metafactory construction from a closure.
 //!
-//! Using some big nasty macro, it supports up to 12 arguments.
-//!
-//! For detailed info about error handling, look at `error` mod. The
-//! example bellow simply unwraps everything.
+//! Using some macro magic, it supports up to 12 arguments.
 //!
 //! ```
 //! use metafactory::metafactory;
@@ -26,7 +23,7 @@
 //!     ]).ok().unwrap().as_factory_of::<String>().unwrap();
 //!
 //!     // value should match what factory produced.
-//!     assert_eq!("invoked with 3, false, hello", factory.get());
+//!     assert_eq!("invoked with 3, false, hello", factory.take());
 //! }
 //! ```
 
@@ -156,10 +153,10 @@ mod macros {
             /// that is actually used at runtime, and would benefit from
             /// any further optimizations.
             impl<'a, $($_A:'static), +, T: 'static> Getter<T> for $GetterScope<$($_AT), +, T> {
-                fn get(&self) -> T {
+                fn take(&self) -> T {
                     (*(self.closure.borrow_mut().deref_mut()))(
                         $(
-                            self.$_a.get()
+                            self.$_a.take()
                         ),+
                     )
                 }
@@ -324,7 +321,7 @@ mod test {
                 vec![
                     arg(false)
                 ]
-            ).as_factory_of::<int>().unwrap().get(),
+            ).as_factory_of::<int>().unwrap().take(),
             6i
         );
     }
@@ -339,7 +336,7 @@ mod test {
                 vec![
                     arg(13u8), arg(12u8)
                 ]
-            ).as_factory_of::<uint>().unwrap().get(),
+            ).as_factory_of::<uint>().unwrap().take(),
             13u + 12u
         );
     }
@@ -448,7 +445,7 @@ mod test {
                     arg(3i16), arg(3i16), arg(3i16), arg(3i16), arg(3i16),
                     arg(3i16), arg(3i16)
                 ]
-            ).as_factory_of::<i16>().unwrap().get(),
+            ).as_factory_of::<i16>().unwrap().take(),
             3i16 * 12
         );
     }

@@ -7,7 +7,7 @@ use std::boxed::{ BoxAny };
 #[experimental]
 pub trait Getter<T> {
     /// Produce a new value.
-    fn get(&self) -> T;
+    fn take(&self) -> T;
 
     /// Create a clone for this getter.
     ///
@@ -38,8 +38,8 @@ impl<'a, T: 'static> Factory<T> {
     }
 
     /// Get a new owned value.
-    pub fn get(&self) -> T {
-        self.getter.get()
+    pub fn take(&self) -> T {
+        self.getter.take()
     }
 }
 
@@ -75,14 +75,14 @@ mod test {
     fn should_get_correct_value() {
         let factory = create_with_val("HAI");
 
-        assert_eq!(factory.get(), "HAI");
+        assert_eq!(factory.take(), "HAI");
     }
 
     #[test]
     fn cloned_factory_should_get_the_same_value() {
         let factory = create_with_val("HAI");
 
-        assert_eq!(factory.clone().get(), factory.get());
+        assert_eq!(factory.clone().take(), factory.take());
     }
 
     #[test]
@@ -90,7 +90,7 @@ mod test {
         let boxany = box create_with_val("HAI") as Box<Any>;
         let downcasted = boxany.as_factory_of::<String>().unwrap();
 
-        assert_eq!(downcasted.get(), "HAI");
+        assert_eq!(downcasted.take(), "HAI");
     }
 
     fn create_with_val(val: &str) -> Factory<String> {
@@ -102,7 +102,7 @@ mod test {
     }
 
     impl Getter<String> for ValContainer {
-        fn get(&self) -> String {
+        fn take(&self) -> String {
             self.val.clone()
         }
 

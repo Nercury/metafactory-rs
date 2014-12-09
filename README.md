@@ -34,7 +34,7 @@ fn main() {
 
     let getter = foo_factory.as_factory_of::<int>().unwrap();
 
-    assert_eq!(getter.get().value, 12);
+    assert_eq!(getter.take().value, 12);
 }
 ```
 

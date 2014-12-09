@@ -1,7 +1,7 @@
-//! This implements metafactory construction from zero-argument closure.
+//! This implements metafactory construction from a zero-argument closure.
 //!
 //! Uses the same mechanism as manyarg closure, but is much easier to read,
-//! because there are no nasty macros here.
+//! because there are no macros here.
 //!
 //! ```
 //! use metafactory::metafactory;
@@ -17,7 +17,7 @@
 //!         .as_factory_of::<bool>().unwrap();
 //!
 //!     // value should match what factory produced.
-//!     assert_eq!(true, factory.get());
+//!     assert_eq!(true, factory.take());
 //! }
 //! ```
 
@@ -65,7 +65,7 @@ impl<T:'static> MetaFactory for Rc<RefCell<||:'static -> T>> {
 
 /// And also use closure itself as created `Factory`.
 impl<T: 'static> Getter<T> for Rc<RefCell<||:'static -> T>> {
-    fn get(&self) -> T {
+    fn take(&self) -> T {
         (*(self.borrow_mut().deref_mut()))()
     }
 
@@ -110,7 +110,7 @@ mod test {
     #[test]
     fn should_build_usable_factory() {
         assert_eq!(
-            create(|| 24i).new(Vec::new()).ok().unwrap().as_factory_of::<int>().unwrap().get(),
+            create(|| 24i).new(Vec::new()).ok().unwrap().as_factory_of::<int>().unwrap().take(),
             24i
         );
     }
@@ -119,8 +119,8 @@ mod test {
     fn factory_clone_should_return_same_value() {
         let factory = create(|| 24i).new(Vec::new()).ok().unwrap().as_factory_of::<int>().unwrap();
         assert_eq!(
-            factory.get(),
-            factory.clone().get()
+            factory.take(),
+            factory.clone().take()
         );
     }
 

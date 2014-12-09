@@ -14,7 +14,7 @@
 //!         .as_factory_of::<&str>().unwrap();
 //!
 //!     // value should match what factory produced.
-//!     assert_eq!("hello", factory.get());
+//!     assert_eq!("hello", factory.take());
 //! }
 //! ```
 
@@ -62,7 +62,7 @@ impl<T: 'static + Clone> MetaFactory for CloneableMetaFactory<T> {
 }
 
 impl<T: 'static + Clone> Getter<T> for CloneableValue<T> {
-    fn get(&self) -> T {
+    fn take(&self) -> T {
         self.value.clone()
     }
 
@@ -107,7 +107,7 @@ mod test {
     #[test]
     fn should_build_usable_factory() {
         assert_eq!(
-            create(24i).new(Vec::new()).ok().unwrap().as_factory_of::<int>().unwrap().get(),
+            create(24i).new(Vec::new()).ok().unwrap().as_factory_of::<int>().unwrap().take(),
             24i
         );
     }
@@ -116,8 +116,8 @@ mod test {
     fn factory_clone_should_return_same_value() {
         let factory = create(24i).new(Vec::new()).ok().unwrap().as_factory_of::<int>().unwrap();
         assert_eq!(
-            factory.get(),
-            factory.clone().get()
+            factory.take(),
+            factory.clone().take()
         );
     }
 

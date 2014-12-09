@@ -19,7 +19,7 @@
 //!
 //!     let getter = sum_factory.as_factory_of::<int>().unwrap();
 //!
-//!     assert_eq!(getter.get(), 11);
+//!     assert_eq!(getter.take(), 11);
 //! }
 //! ```
 //!
@@ -35,9 +35,10 @@
 //! objects or closures. In this case `5i` is a clonable object.
 //!
 //! Returned `sum_factory` has a `Box<Any>` type, and can be downcasted to
-//! a `getter` of appropriate type with `as_factory_of` method.
+//! a `Factory` of appropriate type with `as_factory_of` method.
 //!
-//! Then you can call `get()` on it to invoke your closure.
+//! Then you can call `take()` on this factory `getter` to invoke your closure
+//! and return a new value.
 //!
 //! Note a lot of `unwrap` calls. All the potential argument or type
 //! mismatches produce correct errors that can be dealt with.
@@ -82,12 +83,12 @@
 //!
 //!     let getter = foo_factory.as_factory_of::<Foo>().unwrap();
 //!
-//!     assert_eq!(getter.get().value, 11);
+//!     assert_eq!(getter.take().value, 11);
 //! }
 //! ```
 //!
 //! So, the intention of this library is to have a mechanism to separate 3
-//! things: the mechanism that creates the values, the plugging-in of the
+//! things: creating the values, plugging-in the factories
 //! values, and using them.
 //!
 //! Created metafactories can also be used to inspect closure argument types.
@@ -136,13 +137,13 @@
 //!     let factory = boxany.as_factory_of::<int>().unwrap();
 //!
 //!     // value should be the sum.
-//!     assert_eq!(19, factory.get());
+//!     assert_eq!(19, factory.take());
 //!
 //!     // factory can be cloned
 //!     let factory2 = factory.clone();
 //!
 //!     // both clones invoke the same construction path and return the same value
-//!     assert_eq!(factory.get(), factory2.get());
+//!     assert_eq!(factory.take(), factory2.take());
 //! }
 //! ```
 
@@ -183,7 +184,7 @@ pub mod from_closure;
 ///
 /// Internaly, all parent `Factory`s will be downcasted to correct types
 /// and stored inside returned `Factory`'s scope, so that all of them
-/// can be invoked with a simple `get()` call.
+/// can be invoked with a simple `take()` call.
 ///
 /// ## Simple value as constructor
 ///
@@ -208,7 +209,7 @@ pub mod from_closure;
 ///     .as_factory_of::<int>()
 ///     .unwrap();
 ///
-/// assert_eq!(factory.get(), 5i);
+/// assert_eq!(factory.take(), 5i);
 /// ```
 #[unstable]
 pub trait MetaFactory {
