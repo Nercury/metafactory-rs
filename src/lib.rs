@@ -13,7 +13,7 @@
 //! Let's look at really small example first:
 //!
 //! ```
-//! use metafactory::{ metafactory, constant };
+//! use metafactory::{ metafactory, argless_as_factory };
 //! use metafactory::AsFactoryExt;
 //!
 //! fn main() {
@@ -22,8 +22,8 @@
 //!     );
 //!
 //!     let sum_factory = meta_sum.new(vec![
-//!         constant(5i),
-//!         constant(6i),
+//!         argless_as_factory(5i),
+//!         argless_as_factory(6i),
 //!     ]).ok().unwrap();
 //!
 //!     let getter = sum_factory.as_factory_of::<int>().unwrap();
@@ -37,7 +37,7 @@
 //!
 //! It has a method `new`, which is used above to return a real
 //! concrete factory `sum_factory`. As argument, it takes other factories.
-//! The method `constant()` returns factories for clonable values
+//! The method `argless_as_factory()` returns factories for clonable values
 //! `5i` and `6i`.
 //!
 //! So, metafactories can be created from different sources: clonable
@@ -60,8 +60,7 @@
 //! argument, and creates our own struct:
 //!
 //! ```
-//! use metafactory::{ metafactory, constant };
-//! use metafactory::AsFactoryExt;
+//! use metafactory::{ metafactory, argless_as_factory, AsFactoryExt };
 //!
 //! /// Our own struct.
 //! struct Foo {
@@ -83,8 +82,8 @@
 //!
 //!     let foo_factory = meta_foo.new(vec![
 //!         meta_sum.new(vec![
-//!             constant(5i),
-//!             constant(6i),
+//!             argless_as_factory(5i),
+//!             argless_as_factory(6i),
 //!         ]).ok().unwrap()
 //!     ]).ok().unwrap();
 //!
@@ -255,6 +254,6 @@ pub fn metafactory<'r, T: ToMetaFactory>(any: T) -> Box<MetaFactory + 'r> {
 ///
 /// Compatible value type must have `ToMetaFactory` implementation.
 /// Supported sources are in submodules, look at "clone" for simpliest example.
-pub fn constant<T: ToMetaFactory>(any: T) -> Box<Any> {
+pub fn argless_as_factory<T: ToMetaFactory>(any: T) -> Box<Any> {
     any.to_metafactory().new(Vec::new()).ok().unwrap()
 }

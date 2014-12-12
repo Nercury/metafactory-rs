@@ -7,8 +7,7 @@ Build value factory chains at runtime from lambdas and other sources.
 ## Quick example
 
 ```rust
-use metafactory::{ metafactory, constant };
-use metafactory::AsFactoryExt;
+use metafactory::{ metafactory, argless_as_factory, AsFactoryExt };
 
 fn main() {
     // initialization
@@ -25,8 +24,8 @@ fn main() {
 
     let factory = meta_twice.new(vec![
         meta_sum.new(vec![
-            constant(3i),
-            constant(2i),
+            argless_as_factory(3i),
+            argless_as_factory(2i),
         ]).ok().unwrap()
     ]).ok().unwrap();
 
