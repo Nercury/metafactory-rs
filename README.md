@@ -33,7 +33,7 @@ fn main() {
 
     let getter = any_factory.as_factory_of::<int>().unwrap();
 
-    // note that "take" required no arguments
+    // note that "take" requires no arguments
 
     assert_eq!(getter.take().value, 12);
 }
