@@ -57,3 +57,8 @@ extern crate metafactory;
 ## Resources
 
 - [Full `MetaFactory` documentation](http://nercury.github.io/metafactory-rs)
+- [`MetaFactory` on crates.io](https://crates.io/crates/metafactory)
+
+## License
+
+MIT
