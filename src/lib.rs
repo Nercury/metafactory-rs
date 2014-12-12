@@ -1,4 +1,13 @@
-//! `MetaFactory` can be used to construct value creation chains from
+/*!
+<a href="https://github.com/Nercury/metafactory-rs">
+    <img style="position: absolute; top: 0; left: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_left_red_aa0000.png" alt="Fork me on GitHub">
+</a>
+<style>.sidebar { margin-top: 53px }</style>
+*/
+
+//!
+//!
+//!`MetaFactory` can be used to construct value creation chains from
 //! closures or other sources that produce values.
 //!
 //! Let's look at really small example first:
