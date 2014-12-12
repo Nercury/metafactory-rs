@@ -22,7 +22,7 @@ fn main() {
 
     // plugging in
 
-    let factory = meta_twice.new(vec![
+    let any_factory = meta_twice.new(vec![
         meta_sum.new(vec![
             argless_as_factory(3i),
             argless_as_factory(2i),
@@ -31,7 +31,9 @@ fn main() {
 
     // using
 
-    let getter = foo_factory.as_factory_of::<int>().unwrap();
+    let getter = any_factory.as_factory_of::<int>().unwrap();
+
+    // note that "take" required no arguments
 
     assert_eq!(getter.take().value, 12);
 }
