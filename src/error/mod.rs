@@ -3,12 +3,14 @@
 use typedef::TypeDef;
 
 /// Specified argument count does not match metafactory argument count.
+#[deriving(Copy)]
 pub struct ArgCountMismatch {
     pub expected: uint,
     pub specified: uint,
 }
 
 /// Argument type did not match expected type.
+#[deriving(Copy)]
 pub struct ArgTypeMismatch {
     pub expected_type: TypeDef,
     pub argument_index: uint,
@@ -35,6 +37,7 @@ impl ArgTypeMismatch {
 }
 
 /// Getter creation error types.
+#[deriving(Copy)]
 pub enum FactoryErrorKind {
     /// Incorrect number of arguments.
     ArgCountMismatch(ArgCountMismatch),
