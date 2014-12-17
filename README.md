@@ -39,6 +39,20 @@ fn main() {
 }
 ```
 
+Offers primitive reflection for returned factory type and arguments:
+
+```rust
+let meta_int = metafactory(
+    |arg: bool| i32
+);
+
+// it knows the source returns 32-bit int
+assert!(meta_int.get_type().is::<i32>());
+
+// it knows the argument is bool
+assert!(meta_int.get_arg_types().get(0).unwrap().is::<bool>());
+```
+
 - [Browse complete documentation for in-depth explanation and more examples](http://nercury.github.io/metafactory-rs)
 
 ## Usage
