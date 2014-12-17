@@ -9,7 +9,7 @@
 //! fn main() {
 //!     // build a metafactory from multi-argument closure.
 //!     let meta_factory = metafactory(
-//!         |a: int, b: bool, c: &str| {
+//!         |a: int, b: bool, c: &'static str| {
 //!             format!("invoked with {}, {}, {}", a, b, c)
 //!         }
 //!     );
