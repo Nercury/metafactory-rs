@@ -51,7 +51,7 @@ mod macros {
                 )
             }
         )
-    )
+    );
 
     macro_rules! try_unwrap_factory(
         ($T:ty, $factory:expr, $index:ident)
@@ -68,7 +68,7 @@ mod macros {
                 }
             }
         )
-    )
+    );
 
     macro_rules! count_exprs {
         () => (0);
@@ -175,26 +175,26 @@ mod macros {
                 }
             }
         )
-    )
+    );
 }
 
 many_arg_closure_impl!(
     GetterScope:
     A, A, a
-)
+);
 
 many_arg_closure_impl!(
     GetterScope2:
     A1, A1, a1 |
     A2, A2, a2
-)
+);
 
 many_arg_closure_impl!(
     GetterScope3:
     A1, A1, a1 |
     A2, A2, a2 |
     A3, A3, a3
-)
+);
 
 many_arg_closure_impl!(
     GetterScope4:
@@ -202,7 +202,7 @@ many_arg_closure_impl!(
     A2, A2, a2 |
     A3, A3, a3 |
     A4, A4, a4
-)
+);
 
 many_arg_closure_impl!(
     GetterScope5:
@@ -211,7 +211,7 @@ many_arg_closure_impl!(
     A3, A3, a3 |
     A4, A4, a4 |
     A5, A5, a5
-)
+);
 
 many_arg_closure_impl!(
     GetterScope6:
@@ -221,7 +221,7 @@ many_arg_closure_impl!(
     A4, A4, a4 |
     A5, A5, a5 |
     A6, A6, a6
-)
+);
 
 many_arg_closure_impl!(
     GetterScope7:
@@ -232,7 +232,7 @@ many_arg_closure_impl!(
     A5, A5, a5 |
     A6, A6, a6 |
     A7, A7, a7
-)
+);
 
 many_arg_closure_impl!(
     GetterScope8:
@@ -244,7 +244,7 @@ many_arg_closure_impl!(
     A6, A6, a6 |
     A7, A7, a7 |
     A8, A8, a8
-)
+);
 
 many_arg_closure_impl!(
     GetterScope9:
@@ -257,7 +257,7 @@ many_arg_closure_impl!(
     A7, A7, a7 |
     A8, A8, a8 |
     A9, A9, a9
-)
+);
 
 many_arg_closure_impl!(
     GetterScope10:
@@ -271,7 +271,7 @@ many_arg_closure_impl!(
     A8, A8, a8 |
     A9, A9, a9 |
     A10, A10, a10
-)
+);
 
 many_arg_closure_impl!(
     GetterScope11:
@@ -286,7 +286,7 @@ many_arg_closure_impl!(
     A9, A9, a9 |
     A10, A10, a10 |
     A11, A11, a11
-)
+);
 
 many_arg_closure_impl!(
     GetterScope12:
@@ -302,7 +302,7 @@ many_arg_closure_impl!(
     A10, A10, a10 |
     A11, A11, a11 |
     A12, A12, a12
-)
+);
 
 #[cfg(test)]
 mod test {
