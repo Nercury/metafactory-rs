@@ -166,6 +166,7 @@ use error::{ FactoryErrorKind };
 pub use factory::{ AsFactoryExt };
 
 pub mod factory;
+pub mod aggregate;
 pub mod error;
 pub mod from_clone;
 pub mod from_closure;
