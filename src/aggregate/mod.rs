@@ -1,9 +1,12 @@
+//! Implements a factory that aggregates the results of other factories of
+//! the same type.
+
 use std::any::{ Any, AnyMutRefExt };
 use std::boxed::BoxAny;
 use typedef::TypeDef;
 use factory::{ Factory, Getter };
 
-/// Proxy for configuring factory list without caring about the type used.
+/// Proxy for initializing aggregate factory without caring about the type used.
 ///
 /// ```
 /// # extern crate metafactory;
