@@ -113,7 +113,7 @@ impl<'a> Aggregate<'a> {
 
     /// Returns type which is used as aggregate result.
     pub fn container_of<T: 'static>() -> TypeDef {
-        TypeDef::of::<&[T]>()
+        TypeDef::of::<Vec<T>>()
     }
 }
 
