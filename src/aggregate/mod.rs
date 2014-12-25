@@ -98,6 +98,7 @@ use factory::{ Factory, Getter };
 /// ```
 pub struct Aggregate<'a> {
     typedef: TypeDef,
+    container_typedef: TypeDef,
     any_getter: Box<Any>,
     do_push_items: |&mut Box<Any>, Vec<Box<Any>>|:'a -> (),
     do_new_factory: |&mut Box<Any>|:'a -> Box<Any>, // Don't worry, it's like Javascript ;)
@@ -108,6 +109,7 @@ impl<'a> Aggregate<'a> {
     pub fn new<T: 'static>() -> Aggregate<'a> {
         Aggregate {
             typedef: TypeDef::of::<T>(),
+            container_typedef: TypeDef::of::<Vec<T>>(),
             any_getter: box AggregateGetter::<T>::new(),
             do_push_items: |any_getter, items| {
                 let getter: &mut AggregateGetter<T> = any_getter
@@ -134,6 +136,11 @@ impl<'a> Aggregate<'a> {
         self.typedef.clone()
     }
 
+    /// Return container type.
+    pub fn get_container_type(&self) -> TypeDef {
+        self.container_typedef.clone()
+    }
+
     /// Push factory items into aggregate.
     ///
     /// Note that all items should already match contained aggregate type:
@@ -149,11 +156,6 @@ impl<'a> Aggregate<'a> {
     /// that makes `Vec<int>` values.
     pub fn new_factory(&mut self) -> Box<Any> {
         (self.do_new_factory)(&mut self.any_getter)
-    }
-
-    /// Returns type which is used as aggregate result.
-    pub fn container_of<T: 'static>() -> TypeDef {
-        TypeDef::of::<Vec<T>>()
     }
 }
 
