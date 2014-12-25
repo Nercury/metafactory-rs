@@ -230,7 +230,7 @@ pub trait MetaFactory {
     #[unstable]
     fn new(&self, arg_getters: Vec<Box<Any>>) -> Result<Box<Any>, FactoryErrorKind>;
     #[unstable]
-    fn new_aggregate(&self) -> Aggregate;
+    fn new_aggregate(&self) -> Aggregate<'static>;
 }
 
 /// Trait for values convertable to `MetaFactory`.

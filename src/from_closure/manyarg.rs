@@ -149,7 +149,7 @@ mod macros {
                     Ok(factory)
                 }
 
-                fn new_aggregate(&self) -> Aggregate {
+                fn new_aggregate(&self) -> Aggregate<'static> {
                     Aggregate::new::<T>()
                 }
             }

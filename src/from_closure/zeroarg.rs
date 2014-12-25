@@ -63,7 +63,7 @@ impl<T:'static> MetaFactory for Rc<RefCell<||:'static -> T>> {
         )
     }
 
-    fn new_aggregate(&self) -> Aggregate {
+    fn new_aggregate(&self) -> Aggregate<'static> {
         Aggregate::new::<T>()
     }
 }

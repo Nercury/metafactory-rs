@@ -61,7 +61,7 @@ impl<T: 'static + Clone> MetaFactory for CloneableMetaFactory<T> {
         )
     }
 
-    fn new_aggregate(&self) -> Aggregate {
+    fn new_aggregate(&self) -> Aggregate<'static> {
         Aggregate::new::<T>()
     }
 }
