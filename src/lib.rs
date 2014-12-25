@@ -162,6 +162,7 @@ extern crate typedef;
 use std::any::{ Any };
 use typedef::{ TypeDef };
 use error::{ FactoryErrorKind };
+use aggregate::Aggregate;
 
 pub use factory::{ AsFactoryExt };
 
@@ -228,6 +229,8 @@ pub trait MetaFactory {
     fn get_arg_types(&self) -> Vec<TypeDef>;
     #[unstable]
     fn new(&self, arg_getters: Vec<Box<Any>>) -> Result<Box<Any>, FactoryErrorKind>;
+    #[unstable]
+    fn new_aggregate(&self) -> Aggregate;
 }
 
 /// Trait for values convertable to `MetaFactory`.

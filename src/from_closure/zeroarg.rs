@@ -30,6 +30,7 @@ use typedef::TypeDef;
 use super::super::{ MetaFactory, ToMetaFactory };
 use super::super::factory::{ Factory, Getter };
 use super::super::error::{ FactoryErrorKind };
+use aggregate::Aggregate;
 
 /// Creates `MetaFactory` from closure function.
 #[stable]
@@ -60,6 +61,10 @@ impl<T:'static> MetaFactory for Rc<RefCell<||:'static -> T>> {
                 box self.clone()
             ) as Box<Any>
         )
+    }
+
+    fn new_aggregate(&self) -> Aggregate {
+        Aggregate::new::<T>()
     }
 }
 

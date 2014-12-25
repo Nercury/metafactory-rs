@@ -36,6 +36,7 @@ use typedef::TypeDef;
 use super::super::{ MetaFactory, ToMetaFactory, AsFactoryExt };
 use super::super::factory::{ Factory, Getter };
 use super::super::error::{ FactoryErrorKind, ArgCountMismatch, ArgTypeMismatch };
+use aggregate::Aggregate;
 
 #[macro_escape]
 mod macros {
@@ -146,6 +147,10 @@ mod macros {
                     ) as Box<Any>;
 
                     Ok(factory)
+                }
+
+                fn new_aggregate(&self) -> Aggregate {
+                    Aggregate::new::<T>()
                 }
             }
 

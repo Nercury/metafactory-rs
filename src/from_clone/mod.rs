@@ -24,6 +24,7 @@ use std::any::{ Any };
 use super::{ MetaFactory, ToMetaFactory };
 use super::factory::{ Factory, Getter };
 use super::error::{ FactoryErrorKind };
+use aggregate::Aggregate;
 
 #[experimental]
 pub struct CloneableMetaFactory<T> {
@@ -58,6 +59,10 @@ impl<T: 'static + Clone> MetaFactory for CloneableMetaFactory<T> {
                 box CloneableValue::<T> { value: self.value.clone() }
             ) as Box<Any>
         )
+    }
+
+    fn new_aggregate(&self) -> Aggregate {
+        Aggregate::new::<T>()
     }
 }
 

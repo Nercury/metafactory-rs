@@ -8,6 +8,43 @@ use factory::{ Factory, Getter };
 
 /// Proxy for initializing aggregate factory without caring about the type used.
 ///
+/// Its intended use is as a container of factories that produce a
+/// value of the same type. Then it can itself be used to create a new factory
+/// that aggregates values from all its childs and returns all of them
+/// in a `Vec<T>` type for single `take`.
+///
+/// The most convenient way to initialize a new aggregate is to use
+/// `new_aggregate` method on a metafactory. It will make a correctly typed
+/// aggregate based on the metafactory type.
+///
+/// ```
+/// # extern crate metafactory;
+/// use metafactory::{ metafactory, AsFactoryExt };
+///
+/// fn main() {
+///     let true_metafactory = metafactory(|| true);
+///     let false_metafactory = metafactory(|| false);
+///
+///     // Use any of metafactories to create an aggregate for bool.
+///     let mut aggregate = false_metafactory.new_aggregate();
+///
+///     // We can then add both factories to the aggregate.
+///     aggregate.push_items(vec![
+///         true_metafactory.new(Vec::new()).ok().unwrap(),
+///         false_metafactory.new(Vec::new()).ok().unwrap(),
+///     ]);
+///
+///     // Make a factory from aggregate.
+///     let true_and_false = aggregate.new_factory()
+///         .as_factory_of::<Vec<bool>>().unwrap();
+///
+///     assert_eq!(vec![true, false], true_and_false.take());
+/// }
+/// ```
+///
+/// The example bellow show how to initialize and use aggregate without a
+/// metafactory.
+///
 /// ```
 /// # extern crate metafactory;
 /// use std::any::Any;
