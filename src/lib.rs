@@ -156,6 +156,7 @@
 //! ```
 
 #![feature(macro_rules)]
+#![feature(unboxed_closures)]
 
 extern crate typedef;
 

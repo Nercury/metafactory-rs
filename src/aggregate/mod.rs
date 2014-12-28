@@ -1,7 +1,7 @@
 //! Implements a factory that aggregates the results of other factories of
 //! the same type.
 
-use std::any::{ Any, AnyMutRefExt };
+use std::any::{ Any };
 use std::boxed::BoxAny;
 use typedef::TypeDef;
 use factory::{ Factory, Getter };
@@ -29,13 +29,12 @@ use factory::{ Factory, Getter };
 ///     let mut aggregate = false_metafactory.new_aggregate();
 ///
 ///     // We can then add both factories to the aggregate.
-///     aggregate.push_items(vec![
-///         true_metafactory.new(Vec::new()).ok().unwrap(),
-///         false_metafactory.new(Vec::new()).ok().unwrap(),
-///     ]);
-///
-///     // Make a factory from aggregate.
-///     let true_and_false = aggregate.new_factory()
+///     // and make a factory from aggregate.
+///     let true_and_false = aggregate
+///         .new_factory(vec![
+///             true_metafactory.new(Vec::new()).ok().unwrap(),
+///             false_metafactory.new(Vec::new()).ok().unwrap(),
+///         ])
 ///         .as_factory_of::<Vec<bool>>().unwrap();
 ///
 ///     assert_eq!(vec![true, false], true_and_false.take());
@@ -60,15 +59,14 @@ use factory::{ Factory, Getter };
 ///     // without dealing with types. Of course, we should make sure that types
 ///     // actually match before doing that in the code that is using this
 ///     // implementation.
-///     aggregate.push_items(vec![
-///         argless_as_factory(|| true),
-///         argless_as_factory(true),
-///         argless_as_factory(|| 4i == 8),
-///     ]);
-///
-///     // Once we are ready to use the aggregate as factory, we can call `new_factory` to
-///     // convert all dynamic stuff to statically constructed call hierarchy:
-///     let anyed_bool_array_factory = aggregate.new_factory();
+///     // Then we can call `new_factory` to convert all dynamic stuff to
+///     // statically constructed call hierarchy:
+///     let anyed_bool_array_factory = aggregate
+///         .new_factory(vec![
+///             argless_as_factory(|| true),
+///             argless_as_factory(true),
+///             argless_as_factory(|| 4i == 8),
+///         ]);
 ///
 ///     // Of course, that returns it anyed (`Box<Any>`), but we can easily get un-anyed version
 ///     // by downcasting to `Factory<Vec<bool>>` or using a convenience extension
@@ -99,9 +97,7 @@ use factory::{ Factory, Getter };
 pub struct Aggregate<'a> {
     typedef: TypeDef,
     container_typedef: TypeDef,
-    any_getter: Box<Any>,
-    do_push_items: |&mut Box<Any>, Vec<Box<Any>>|:'a -> (),
-    do_new_factory: |&mut Box<Any>|:'a -> Box<Any>, // Don't worry, it's like Javascript ;)
+    do_new: Box<Fn<(Vec<Box<Any>>,),Box<Any>> + 'a>,
 }
 
 impl<'a> Aggregate<'a> {
@@ -110,23 +106,16 @@ impl<'a> Aggregate<'a> {
         Aggregate {
             typedef: TypeDef::of::<T>(),
             container_typedef: TypeDef::of::<Vec<T>>(),
-            any_getter: box AggregateGetter::<T>::new(),
-            do_push_items: |any_getter, items| {
-                let getter: &mut AggregateGetter<T> = any_getter
-                    .downcast_mut::<AggregateGetter<T>>().unwrap();
-
-                let len = items.len();
-                let items_iter = items.into_iter()
-                    .map(|i| *i.downcast::<Factory<T>>().ok().unwrap());
-
-                getter.factories.reserve_exact(len);
-                getter.factories.extend(items_iter);
-            },
-            do_new_factory: |any_getter| {
-                let getter: &mut AggregateGetter<T> = any_getter
-                    .downcast_mut::<AggregateGetter<T>>().unwrap();
-
-                box Factory::<Vec<T>>::new(getter.boxed_clone())
+            do_new: box |&: items: Vec<Box<Any>>| {
+                box Factory::<Vec<T>>::new(
+                    box AggregateGetter::<T>::new(
+                        items.into_iter()
+                            .map(|i| *i.downcast::<Factory<T>>().ok().expect(
+                                format!("failed to downcast factory child to Factory<{}>", TypeDef::name_of::<T>()).as_slice()
+                            ))
+                            .collect()
+                    )
+                )
             }
         }
     }
@@ -141,21 +130,12 @@ impl<'a> Aggregate<'a> {
         self.container_typedef.clone()
     }
 
-    /// Push factory items into aggregate.
-    ///
-    /// Note that all items should already match contained aggregate type:
-    /// if aggregate was created for `int`, all pushed factories should
-    /// produce int. Otherwise this method will panic your app.
-    pub fn push_items(&mut self, items: Vec<Box<Any>>) {
-        (self.do_push_items)(&mut self.any_getter, items);
-    }
-
     /// Produces factory usable as argument for other factories.
     ///
     /// If inner factories make `int` values, this method will make factory
     /// that makes `Vec<int>` values.
-    pub fn new_factory(&mut self) -> Box<Any> {
-        (self.do_new_factory)(&mut self.any_getter)
+    pub fn new_factory(&self, items: Vec<Box<Any>>) -> Box<Any> {
+        (self.do_new).call((items,))
     }
 }
 
@@ -172,9 +152,9 @@ impl<T> Clone for AggregateGetter<T> {
 }
 
 impl<T> AggregateGetter<T> {
-    pub fn new() -> AggregateGetter<T> {
+    pub fn new(factories: Vec<Factory<T>>) -> AggregateGetter<T> {
         AggregateGetter::<T> {
-            factories: Vec::with_capacity(0)
+            factories: factories
         }
     }
 }
@@ -207,10 +187,6 @@ mod test {
     #[test]
     fn should_be_usable_as_vec_of_types() {
         let mut container = Aggregate::new::<int>();
-        container.push_items(vec![
-            argless_as_factory(5i),
-            argless_as_factory(13i)
-        ]);
 
         let parent_metafactory = metafactory(
             |items: Vec<int>|
@@ -222,7 +198,12 @@ mod test {
 
         let parent_getter = parent_metafactory
             .new(vec![
-                container.new_factory()
+                container.new_factory(
+                    vec![
+                        argless_as_factory(5i),
+                        argless_as_factory(13i)
+                    ]
+                )
             ]).ok().unwrap()
             .as_factory_of::<String>().unwrap()
         ;
