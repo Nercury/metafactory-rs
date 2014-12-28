@@ -4,7 +4,7 @@
 use std::any::{ Any };
 use std::boxed::BoxAny;
 use typedef::TypeDef;
-use factory::{ Factory, Getter };
+use { Factory, Getter };
 
 /// Proxy for initializing aggregate factory without caring about the type used.
 ///
