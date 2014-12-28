@@ -108,7 +108,7 @@ impl<'a> Aggregate<'a> {
             container_typedef: TypeDef::of::<Vec<T>>(),
             do_new: box |&: items: Vec<Box<Any>>| {
                 box Factory::<Vec<T>>::new(
-                    box AggregateGetter::<T>::new(
+                    box AG::<T>::new(
                         items.into_iter()
                             .map(|i| *i.downcast::<Factory<T>>().ok().expect(
                                 format!("failed to downcast factory child to Factory<{}>", TypeDef::name_of::<T>()).as_slice()
@@ -139,27 +139,27 @@ impl<'a> Aggregate<'a> {
     }
 }
 
-struct AggregateGetter<T: 'static> {
+struct AG<T: 'static> {
     factories: Vec<Factory<T>>,
 }
 
-impl<T> Clone for AggregateGetter<T> {
-    fn clone(&self) -> AggregateGetter<T> {
-        AggregateGetter::<T> {
+impl<T> Clone for AG<T> {
+    fn clone(&self) -> AG<T> {
+        AG::<T> {
             factories: self.factories.clone()
         }
     }
 }
 
-impl<T> AggregateGetter<T> {
-    pub fn new(factories: Vec<Factory<T>>) -> AggregateGetter<T> {
-        AggregateGetter::<T> {
+impl<T> AG<T> {
+    pub fn new(factories: Vec<Factory<T>>) -> AG<T> {
+        AG::<T> {
             factories: factories
         }
     }
 }
 
-impl<T> Getter<Vec<T>> for AggregateGetter<T> {
+impl<T> Getter<Vec<T>> for AG<T> {
     fn take(&self) -> Vec<T> {
 
         // Reserve exact result size.
@@ -186,7 +186,7 @@ mod test {
 
     #[test]
     fn should_be_usable_as_vec_of_types() {
-        let mut container = Aggregate::new::<int>();
+        let container = Aggregate::new::<int>();
 
         let parent_metafactory = metafactory(
             |items: Vec<int>|

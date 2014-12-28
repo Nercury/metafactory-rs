@@ -27,9 +27,9 @@ use std::cell::RefCell;
 
 use typedef::TypeDef;
 
-use super::super::{ MetaFactory, ToMetaFactory };
-use super::super::factory::{ Factory, Getter };
-use super::super::error::{ FactoryErrorKind };
+use { MetaFactory, ToMetaFactory };
+use { Factory, Getter };
+use error::{ FactoryErrorKind };
 use aggregate::Aggregate;
 
 /// Creates `MetaFactory` from closure function.

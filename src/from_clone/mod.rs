@@ -22,17 +22,17 @@ use typedef::{ TypeDef };
 use std::any::{ Any };
 
 use super::{ MetaFactory, ToMetaFactory };
-use super::factory::{ Factory, Getter };
+use super::{ Factory, Getter };
 use super::error::{ FactoryErrorKind };
 use aggregate::Aggregate;
 
 #[experimental]
-pub struct CloneableMetaFactory<T> {
+struct CloneableMetaFactory<T> {
     pub value: T,
 }
 
 #[experimental]
-pub struct CloneableValue<T> {
+struct CloneableValue<T> {
     pub value: T,
 }
 

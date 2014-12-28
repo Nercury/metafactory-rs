@@ -33,9 +33,9 @@ use std::cell::RefCell;
 
 use typedef::TypeDef;
 
-use super::super::{ MetaFactory, ToMetaFactory, AsFactoryExt };
-use super::super::factory::{ Factory, Getter };
-use super::super::error::{ FactoryErrorKind, ArgCountMismatch, ArgTypeMismatch };
+use { MetaFactory, ToMetaFactory, AsFactoryExt };
+use { Factory, Getter };
+use error::{ FactoryErrorKind, ArgCountMismatch, ArgTypeMismatch };
 use aggregate::Aggregate;
 
 #[macro_escape]

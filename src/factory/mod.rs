@@ -1,6 +1,6 @@
 //! Implements a wrapper struct container for internal getter.
 
-use std::any::{ Any };
+use std::any::{ Any, AnyRefExt };
 use std::boxed::{ BoxAny };
 
 /// Gettable value trait.
@@ -11,8 +11,8 @@ pub trait Getter<T> {
 
     /// Create a clone for this getter.
     ///
-    /// This is kind of experimental solution - it allocates a new box
-    /// to avoid breaking `Sized` requirement for `Factory::Clone`.
+    /// This is kind of experimental solution - can not return plain traits
+    /// as function result.
     fn boxed_clone(&self) -> Box<Getter<T> + 'static>;
 }
 
@@ -53,13 +53,23 @@ impl<'a, T: 'static> Clone for Factory<T> {
 
 /// Downcast value to `Factory`.
 pub trait AsFactoryExt {
+    /// Downcast to factory and consume `Box<Any>`.
     fn as_factory_of<T>(self) -> Option<Factory<T>>;
+    /// Downcast to factory by creating factory clone.
+    fn as_factory_clone_of<T>(&self) -> Option<Factory<T>>;
 }
 
 impl AsFactoryExt for Box<Any> {
     fn as_factory_of<'a, T: 'static>(self) -> Option<Factory<T>> {
         match self.downcast::<Factory<T>>().ok() {
             Some(val) => Some(*val),
+            None => None
+        }
+    }
+
+    fn as_factory_clone_of<'a, T: 'static>(&self) -> Option<Factory<T>> {
+        match self.downcast_ref::<Factory<T>>() {
+            Some(val) => Some(val.clone()),
             None => None
         }
     }

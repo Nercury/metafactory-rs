@@ -13,8 +13,7 @@
 //! Let's look at really small example first:
 //!
 //! ```
-//! use metafactory::{ metafactory, argless_as_factory };
-//! use metafactory::AsFactoryExt;
+//! use metafactory::{ metafactory, argless_as_factory, AsFactoryExt };
 //!
 //! fn main() {
 //!     let meta_sum = metafactory(
@@ -115,8 +114,7 @@
 //! Finally, a more complete example of available functionality:
 //!
 //! ```
-//! use metafactory::metafactory;
-//! use metafactory::AsFactoryExt;
+//! use metafactory::{ metafactory, AsFactoryExt };
 //!
 //! fn main() {
 //!     // build argument-factory from cloneable source.
@@ -165,13 +163,13 @@ use typedef::{ TypeDef };
 use error::{ FactoryErrorKind };
 use aggregate::Aggregate;
 
-pub use factory::{ AsFactoryExt };
-
-pub mod factory;
+pub use factory::{ Getter, Factory, AsFactoryExt };
 pub mod aggregate;
 pub mod error;
-pub mod from_clone;
-pub mod from_closure;
+
+mod factory;
+mod from_clone;
+mod from_closure;
 
 /// Implements reflection and initiation of any abstract object constructor.
 ///
@@ -205,8 +203,7 @@ pub mod from_closure;
 /// correct, and then create an actual getter for the value:
 ///
 /// ```
-/// use metafactory::metafactory;
-/// use metafactory::AsFactoryExt;
+/// use metafactory::{ metafactory, AsFactoryExt };
 ///
 /// let metafactory = metafactory(5i);
 /// assert!(metafactory.get_type().is::<int>());
