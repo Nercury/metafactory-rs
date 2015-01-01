@@ -125,8 +125,7 @@ mod macros {
                     $(
                         let $_a; // Factory object of correct type.
                         { // Scope so we can reuse `maybe_factory`.
-                            // Already checked the argc above, so unwrap.
-                            let maybe_factory = getters.remove(0).unwrap();
+                            let maybe_factory = getters.remove(0);
 
                             // Return error if factory does not have a correct type.
                             $_a = try_unwrap_factory!($_AT, maybe_factory, arg_index);
