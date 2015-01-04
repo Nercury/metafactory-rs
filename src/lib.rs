@@ -158,7 +158,7 @@
 
 extern crate typedef;
 
-use std::any::{ Any, AnyRefExt };
+use std::any::{ Any };
 use std::boxed::{ BoxAny };
 
 use typedef::{ TypeDef };
