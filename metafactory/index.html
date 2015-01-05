@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `metafactory` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, metafactory">
+
+    <title>metafactory - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <section class="sidebar">
+        
+        <p class='location'></p>
+    </section>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>metafactory</a><wbr></span><span class='out-of-band'><a href='stability.html'>[stability]</a> <span id='render-detail'>
+            <a id="collapse-all" href="#">[-]
+            </a>&nbsp;<a id="expand-all" href="#">[+]</a>
+        </span><a id='src-0' href='../src/metafactory/lib.rs.html#1-334'>[src]</a></span></h1>
+<div class='docblock'><p><a href="https://github.com/Nercury/metafactory-rs">
+    <img style="position: absolute; top: 0; left: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_left_red_aa0000.png" alt="Fork me on GitHub">
+</a>
+<style>.sidebar { margin-top: 53px }</style></p>
+
+<p><code>MetaFactory</code> can be used to construct value creation chains from
+ closures or other sources that produce values.</p>
+
+<p>Let&#39;s look at really small example first:</p>
+<pre class='rust '>
+ <span class='kw'>use</span> <span class='ident'>metafactory</span>::{ <span class='ident'>metafactory</span>, <span class='ident'>argless_as_factory</span>, <span class='ident'>AsFactoryExt</span> };
+
+ <span class='kw'>fn</span> <span class='ident'>main</span>() {
+     <span class='kw'>let</span> <span class='ident'>meta_sum</span> <span class='op'>=</span> <span class='ident'>metafactory</span>(
+         <span class='op'>|</span><span class='ident'>a</span>: <span class='ident'>int</span>, <span class='ident'>b</span>: <span class='ident'>int</span><span class='op'>|</span> <span class='ident'>a</span> <span class='op'>+</span> <span class='ident'>b</span>
+     );
+
+     <span class='kw'>let</span> <span class='ident'>sum_factory</span> <span class='op'>=</span> <span class='ident'>meta_sum</span>.<span class='ident'>new</span>(<span class='macro'>vec</span><span class='macro'>!</span>[
+         <span class='ident'>argless_as_factory</span>(<span class='number'>5i</span>),
+         <span class='ident'>argless_as_factory</span>(<span class='number'>6i</span>),
+     ]).<span class='ident'>ok</span>().<span class='ident'>unwrap</span>();
+
+     <span class='kw'>let</span> <span class='ident'>getter</span> <span class='op'>=</span> <span class='ident'>sum_factory</span>.<span class='ident'>as_factory_of</span>::<span class='op'>&lt;</span><span class='ident'>int</span><span class='op'>&gt;</span>().<span class='ident'>unwrap</span>();
+
+     <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>getter</span>.<span class='ident'>take</span>(), <span class='number'>11</span>);
+ }
+</pre>
+
+<p>What is going on? Well, first we use <code>metafactory</code> generic function to
+ convert arbitrary closure to <code>MetaFactory</code> object <code>meta_sum</code>.</p>
+
+<p>It has a method <code>new</code>, which is used above to return a real
+ concrete factory <code>sum_factory</code>. As argument, it takes other factories.
+ The method <code>argless_as_factory()</code> returns factories for clonable values
+ <code>5i</code> and <code>6i</code>.</p>
+
+<p>So, metafactories can be created from different sources: clonable
+ objects or closures. In this case <code>5i</code> is a clonable object.</p>
+
+<p>Returned <code>sum_factory</code> has a <code>Box&lt;Any&gt;</code> type, and can be downcasted to
+ a <code>Factory</code> of appropriate type with <code>as_factory_of</code> method.</p>
+
+<p>Then you can call <code>take()</code> on this factory <code>getter</code> to invoke your closure
+ and return a new value.</p>
+
+<p>Note a lot of <code>unwrap</code> calls. All the potential argument or type
+ mismatches produce correct errors that can be dealt with.</p>
+
+<p>Now, the example above might seem a bit involved, but consider what it
+ allows us to do: provided argument counts and types match, we can
+ connect any chain of factories together, at runtime.</p>
+
+<p>Let&#39;s expand example to add a new factory that uses <code>sum_factory</code> as an
+ argument, and creates our own struct:</p>
+<pre class='rust '>
+ <span class='kw'>use</span> <span class='ident'>metafactory</span>::{ <span class='ident'>metafactory</span>, <span class='ident'>argless_as_factory</span>, <span class='ident'>AsFactoryExt</span> };
+
+ <span class='doccomment'>/// Our own struct.</span>
+ <span class='kw'>struct</span> <span class='ident'>Foo</span> {
+     <span class='ident'>value</span>: <span class='ident'>int</span>,
+ }
+
+ <span class='kw'>fn</span> <span class='ident'>main</span>() {
+     <span class='comment'>// initialization</span>
+
+     <span class='kw'>let</span> <span class='ident'>meta_sum</span> <span class='op'>=</span> <span class='ident'>metafactory</span>(
+         <span class='op'>|</span><span class='ident'>a</span>: <span class='ident'>int</span>, <span class='ident'>b</span>: <span class='ident'>int</span><span class='op'>|</span> <span class='ident'>a</span> <span class='op'>+</span> <span class='ident'>b</span>
+     );
+
+     <span class='kw'>let</span> <span class='ident'>meta_foo</span> <span class='op'>=</span> <span class='ident'>metafactory</span>(
+         <span class='op'>|</span><span class='ident'>sum</span>: <span class='ident'>int</span><span class='op'>|</span> <span class='ident'>Foo</span> { <span class='ident'>value</span>: <span class='ident'>sum</span> }
+     );
+
+     <span class='comment'>// plugging in</span>
+
+     <span class='kw'>let</span> <span class='ident'>foo_factory</span> <span class='op'>=</span> <span class='ident'>meta_foo</span>.<span class='ident'>new</span>(<span class='macro'>vec</span><span class='macro'>!</span>[
+         <span class='ident'>meta_sum</span>.<span class='ident'>new</span>(<span class='macro'>vec</span><span class='macro'>!</span>[
+             <span class='ident'>argless_as_factory</span>(<span class='number'>5i</span>),
+             <span class='ident'>argless_as_factory</span>(<span class='number'>6i</span>),
+         ]).<span class='ident'>ok</span>().<span class='ident'>unwrap</span>()
+     ]).<span class='ident'>ok</span>().<span class='ident'>unwrap</span>();
+
+     <span class='comment'>// using</span>
+
+     <span class='kw'>let</span> <span class='ident'>getter</span> <span class='op'>=</span> <span class='ident'>foo_factory</span>.<span class='ident'>as_factory_of</span>::<span class='op'>&lt;</span><span class='ident'>Foo</span><span class='op'>&gt;</span>().<span class='ident'>unwrap</span>();
+
+     <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>getter</span>.<span class='ident'>take</span>().<span class='ident'>value</span>, <span class='number'>11</span>);
+ }
+</pre>
+
+<p>So, the intention of this library is to have a mechanism to separate 3
+ things: creating the values, plugging-in the factories
+ values, and using them.</p>
+
+<p>Created metafactories can also be used to inspect closure argument types.
+ It is also possible to clone the created factory: in such case, all
+ the call tree is also cloned internally. This makes it possible to
+ pass a copy of a factory to a task.</p>
+
+<p>Factories intentionally do not produce any kind of singletons or
+ references, only new values. You can also look at them as configurable
+ stream of values.</p>
+
+<p>If this library looks a bit lower-level, it is because it is intended as
+ such: more convenient wrappers like dependency injection or plugin
+ architecture can be implemented on top of this.</p>
+
+<p>Finally, a more complete example of available functionality:</p>
+<pre class='rust '>
+ <span class='kw'>use</span> <span class='ident'>metafactory</span>::{ <span class='ident'>metafactory</span>, <span class='ident'>AsFactoryExt</span> };
+
+ <span class='kw'>fn</span> <span class='ident'>main</span>() {
+     <span class='comment'>// build argument-factory from cloneable source.</span>
+     <span class='kw'>let</span> <span class='ident'>meta_arg1</span> <span class='op'>=</span> <span class='ident'>metafactory</span>(<span class='number'>5i</span>);
+
+     <span class='comment'>// build argument-factory from lambda.</span>
+     <span class='kw'>let</span> <span class='ident'>meta_arg2</span> <span class='op'>=</span> <span class='ident'>metafactory</span>(<span class='op'>||</span> <span class='number'>14i32</span>);
+
+     <span class='comment'>// build a factory that uses other factories create added numbers.</span>
+     <span class='kw'>let</span> <span class='ident'>meta_adder</span> <span class='op'>=</span> <span class='ident'>metafactory</span>(<span class='op'>|</span><span class='ident'>a1</span>: <span class='ident'>int</span>, <span class='ident'>a2</span>: <span class='ident'>i32</span><span class='op'>|</span> <span class='ident'>a1</span> <span class='op'>+</span> <span class='ident'>a2</span> <span class='kw'>as</span> <span class='ident'>int</span>);
+
+     <span class='comment'>// it knows the cloneable source returns int</span>
+     <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>meta_arg1</span>.<span class='ident'>get_type</span>().<span class='ident'>is</span>::<span class='op'>&lt;</span><span class='ident'>int</span><span class='op'>&gt;</span>());
+     <span class='comment'>// it knows the lambda source returns i32</span>
+     <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>meta_arg2</span>.<span class='ident'>get_type</span>().<span class='ident'>is</span>::<span class='op'>&lt;</span><span class='ident'>i32</span><span class='op'>&gt;</span>());
+     <span class='comment'>// it knows the lambda with 2 args returns int</span>
+     <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>meta_adder</span>.<span class='ident'>get_type</span>().<span class='ident'>is</span>::<span class='op'>&lt;</span><span class='ident'>int</span><span class='op'>&gt;</span>());
+
+     <span class='comment'>// create a factory for adder, pass other 2 factories as arguments</span>
+     <span class='kw'>let</span> <span class='ident'>boxany</span> <span class='op'>=</span> <span class='ident'>meta_adder</span>.<span class='ident'>new</span>(<span class='macro'>vec</span><span class='macro'>!</span>[
+         <span class='ident'>meta_arg1</span>.<span class='ident'>new</span>(<span class='ident'>Vec</span>::<span class='ident'>new</span>()).<span class='ident'>ok</span>().<span class='ident'>unwrap</span>(),
+         <span class='ident'>meta_arg2</span>.<span class='ident'>new</span>(<span class='ident'>Vec</span>::<span class='ident'>new</span>()).<span class='ident'>ok</span>().<span class='ident'>unwrap</span>(),
+     ]).<span class='ident'>ok</span>().<span class='ident'>unwrap</span>();
+
+     <span class='comment'>// conveniently downcast factory to callable instance</span>
+     <span class='kw'>let</span> <span class='ident'>factory</span> <span class='op'>=</span> <span class='ident'>boxany</span>.<span class='ident'>as_factory_of</span>::<span class='op'>&lt;</span><span class='ident'>int</span><span class='op'>&gt;</span>().<span class='ident'>unwrap</span>();
+
+     <span class='comment'>// value should be the sum.</span>
+     <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>19</span>, <span class='ident'>factory</span>.<span class='ident'>take</span>());
+
+     <span class='comment'>// factory can be cloned</span>
+     <span class='kw'>let</span> <span class='ident'>factory2</span> <span class='op'>=</span> <span class='ident'>factory</span>.<span class='ident'>clone</span>();
+
+     <span class='comment'>// both clones invoke the same construction path and return the same value</span>
+     <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>factory</span>.<span class='ident'>take</span>(), <span class='ident'>factory2</span>.<span class='ident'>take</span>());
+ }
+</pre>
+</div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table>
+                    <tr>
+                        <td><a class='stability Unmarked' title='No stability level'></a><a class='mod' href='aggregate/index.html'
+                               title='metafactory::aggregate'>aggregate</a></td>
+                        <td class='docblock short'><p>Implements a factory that aggregates the results of other factories of
+the same type.</p>
+</td>
+                    </tr>
+                
+                    <tr>
+                        <td><a class='stability Unmarked' title='No stability level'></a><a class='mod' href='error/index.html'
+                               title='metafactory::error'>error</a></td>
+                        <td class='docblock short'><p>Closure argument error types.</p>
+</td>
+                    </tr>
+                </table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                    <tr>
+                        <td><a class='stability Stable' title='Stable'></a><a class='struct' href='struct.Factory.html'
+                               title='metafactory::Factory'>Factory</a></td>
+                        <td class='docblock short'><p>A factory proxy.</p>
+</td>
+                    </tr>
+                </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+<table>
+                    <tr>
+                        <td><a class='stability Unmarked' title='No stability level'></a><a class='trait' href='trait.AsFactoryExt.html'
+                               title='metafactory::AsFactoryExt'>AsFactoryExt</a></td>
+                        <td class='docblock short'><p>Downcast value to <code>Factory</code>.</p>
+</td>
+                    </tr>
+                
+                    <tr>
+                        <td><a class='stability Experimental' title='Experimental'></a><a class='trait' href='trait.Getter.html'
+                               title='metafactory::Getter'>Getter</a></td>
+                        <td class='docblock short'><p>Gettable value trait.</p>
+</td>
+                    </tr>
+                
+                    <tr>
+                        <td><a class='stability Unstable' title='Unstable'></a><a class='trait' href='trait.MetaFactory.html'
+                               title='metafactory::MetaFactory'>MetaFactory</a></td>
+                        <td class='docblock short'><p>Implements reflection and initiation of any abstract object constructor.</p>
+</td>
+                    </tr>
+                
+                    <tr>
+                        <td><a class='stability Unstable' title='Unstable'></a><a class='trait' href='trait.ToMetaFactory.html'
+                               title='metafactory::ToMetaFactory'>ToMetaFactory</a></td>
+                        <td class='docblock short'><p>Trait for values convertable to <code>MetaFactory</code>.</p>
+</td>
+                    </tr>
+                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table>
+                    <tr>
+                        <td><a class='stability Unmarked' title='No stability level'></a><a class='fn' href='fn.argless_as_factory.html'
+                               title='metafactory::argless_as_factory'>argless_as_factory</a></td>
+                        <td class='docblock short'><p>Create a new <code>MetaFactory</code> and return <code>Factory</code> in <code>Box&lt;Any&gt;</code> for source with no arguments.</p>
+</td>
+                    </tr>
+                
+                    <tr>
+                        <td><a class='stability Unmarked' title='No stability level'></a><a class='fn' href='fn.metafactory.html'
+                               title='metafactory::metafactory'>metafactory</a></td>
+                        <td class='docblock short'><p>Create a new <code>MetaFactory</code> for any compatible value source.</p>
+</td>
+                    </tr>
+                </table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <div id="help" class="hidden">
+        <div class="shortcuts">
+            <h1>Keyboard shortcuts</h1>
+            <dl>
+                <dt>?</dt>
+                <dd>Show this help dialog</dd>
+                <dt>S</dt>
+                <dd>Focus the search field</dd>
+                <dt>&larrb;</dt>
+                <dd>Move up in search results</dd>
+                <dt>&rarrb;</dt>
+                <dd>Move down in search results</dd>
+                <dt>&#9166;</dt>
+                <dd>Go to active search result</dd>
+            </dl>
+        </div>
+        <div class="infos">
+            <h1>Search tricks</h1>
+            <p>
+                Prefix searches with a type followed by a colon (e.g.
+                <code>fn:</code>) to restrict the search to a given type.
+            </p>
+            <p>
+                Accepted types are: <code>fn</code>, <code>mod</code>,
+                <code>struct</code>, <code>enum</code>,
+                <code>trait</code>, <code>typedef</code> (or
+                <code>tdef</code>).
+            </p>
+        </div>
+    </div>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "metafactory";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script async src="../search-index.js"></script>
+</body>
+</html>
